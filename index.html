@@ -400,6 +400,8 @@ async function ativarNotif(silencioso){
   }catch(e){notifMsg('Não foi possível ativar as notificações.','Tentar de novo')}
 }
 
+// registra o service worker já na abertura, para o Chrome oferecer "Instalar app"
+if('serviceWorker' in navigator){navigator.serviceWorker.register('firebase-messaging-sw.js').then(r=>swReg=r).catch(()=>{})}
 if(!PIN)askPin();else{load().then(openFromHash);setupNotif()}
 setInterval(()=>{if(PIN&&!document.hidden&&!$('#dlg').open&&!$('#dlgP').open)load()},30000);
 document.addEventListener('visibilitychange',()=>{if(!document.hidden&&PIN)load()});
