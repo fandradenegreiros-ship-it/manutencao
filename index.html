@@ -1,0 +1,408 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Manutenção Vista Alegre</title>
+<link rel="manifest" href="manifest.json">
+<meta name="theme-color" content="#2f6b4a">
+<link rel="icon" href="icon-192.png">
+<link rel="apple-touch-icon" href="apple-touch-icon.png">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="Manutenção">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Space+Grotesk:wght@500;700&display=swap">
+<style>
+:root{
+  --bg:#f3f5f2; --surface:#ffffff; --fg:#1c2620; --muted:#5d6b62; --line:#d9dfd9;
+  --accent:#2f6b4a; --accent-fg:#ffffff;
+  --red:#c0392b; --red-bg:#fbe7e4; --amber:#a86a00; --amber-bg:#fdf1d8; --green:#2e7d4f; --green-bg:#e2f3e8; --blue:#2a5d9f; --blue-bg:#e3edf9;
+  --display:"Space Grotesk",system-ui,sans-serif; --body:"Inter",system-ui,sans-serif;
+}
+@media (prefers-color-scheme:dark){:root{
+  --bg:#121815; --surface:#1b231e; --fg:#e6ece7; --muted:#9aa89f; --line:#2e3a33; --accent:#5fae83; --accent-fg:#0d1510;
+  --red:#ff8a7a; --red-bg:#3a1f1b; --amber:#f0b44c; --amber-bg:#3a2d13; --green:#7ccf9c; --green-bg:#173225; --blue:#8bb6ee; --blue-bg:#1a2a40; color-scheme:dark}}
+*{box-sizing:border-box}
+[hidden]{display:none!important}
+body{margin:0;background:var(--bg);color:var(--fg);font-family:var(--body);font-size:15px;line-height:1.45}
+.wrap{max-width:900px;margin:0 auto;padding:16px 16px 48px}
+header{display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;gap:12px}
+h1{font-family:var(--display);font-size:1.45rem;margin:0}
+h1 small{display:block;font-family:var(--body);font-size:.8rem;color:var(--muted);font-weight:500}
+h2{font-family:var(--display);font-size:1.1rem;margin:0}
+.tabs{display:flex;gap:6px;flex-wrap:wrap;margin:16px 0}
+.tab{border:1px solid var(--line);background:var(--surface);color:var(--fg);padding:8px 14px;border-radius:999px;font:inherit;font-weight:600;cursor:pointer}
+.tab[aria-selected="true"]{background:var(--accent);color:var(--accent-fg);border-color:var(--accent)}
+.tab .n{opacity:.75;font-weight:500;margin-left:4px}
+button{font:inherit;cursor:pointer;border-radius:8px;border:1px solid var(--line);background:var(--surface);color:var(--fg);padding:8px 14px;font-weight:600}
+button:disabled{opacity:.6;cursor:wait}
+.primary{background:var(--accent);color:var(--accent-fg);border-color:var(--accent)}
+button:focus-visible,input:focus-visible,select:focus-visible,textarea:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+.summary{display:grid;grid-template-columns:repeat(5,1fr);gap:8px;margin-bottom:12px}
+.stat.alert{background:var(--red-bg);border-color:var(--red);color:var(--red)}
+.stat.alert span{color:var(--red)}
+.stat{background:var(--surface);border:1px solid var(--line);border-radius:10px;padding:10px 12px}
+.stat b{display:block;font-family:var(--display);font-size:1.5rem;font-variant-numeric:tabular-nums}
+.stat span{font-size:.78rem;color:var(--muted)}
+.filters{display:flex;flex-wrap:wrap;gap:8px;margin-bottom:12px}
+.filters input,.filters select{flex:1 1 140px;min-width:0}
+input,select,textarea{font:inherit;color:var(--fg);background:var(--surface);border:1px solid var(--line);border-radius:8px;padding:9px 10px;width:100%}
+textarea{min-height:80px;resize:vertical}
+label{display:flex;flex-direction:column;gap:4px;font-size:.82rem;font-weight:600;color:var(--muted)}
+.list{display:flex;flex-direction:column;gap:8px}
+.card{background:var(--surface);border:1px solid var(--line);border-left:5px solid var(--line);border-radius:10px;padding:12px 14px;cursor:pointer;display:grid;gap:4px}
+.card.p-urgente{border-left-color:var(--red)} .card.p-normal{border-left-color:var(--amber)} .card.p-baixa{border-left-color:var(--green)}
+.card .top{display:flex;flex-wrap:wrap;gap:6px 10px;align-items:baseline}
+.card .num{font-family:var(--display);font-weight:700}
+.card .loc{font-weight:700}
+.desc{min-width:0;overflow-wrap:anywhere;white-space:pre-wrap}
+.meta{font-size:.8rem;color:var(--muted)}
+.pill{display:inline-block;font-size:.72rem;font-weight:700;padding:2px 8px;border-radius:999px;letter-spacing:.02em;text-transform:uppercase}
+.s-aberta{background:var(--red-bg);color:var(--red)} .s-andamento{background:var(--blue-bg);color:var(--blue)} .s-peca{background:var(--amber-bg);color:var(--amber)} .s-concluida{background:var(--green-bg);color:var(--green)}
+.empty{background:var(--surface);border:1px dashed var(--line);border-radius:10px;padding:24px;text-align:center;color:var(--muted)}
+.form{background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:16px;display:grid;gap:12px}
+.row{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.seg{display:flex;gap:6px;flex-wrap:wrap}
+.seg button[aria-pressed="true"].u{background:var(--red);border-color:var(--red);color:#fff}
+.seg button[aria-pressed="true"].n{background:var(--amber);border-color:var(--amber);color:#fff}
+.seg button[aria-pressed="true"].b{background:var(--green);border-color:var(--green);color:#fff}
+.seg button[aria-pressed="true"].s{background:var(--accent);border-color:var(--accent);color:var(--accent-fg)}
+.photos{display:flex;gap:8px;flex-wrap:wrap}
+.photos img{width:96px;height:96px;object-fit:cover;border-radius:8px;border:1px solid var(--line)}
+.toast{position:fixed;left:50%;transform:translateX(-50%);bottom:16px;background:var(--fg);color:var(--bg);padding:10px 16px;border-radius:8px;font-weight:600;z-index:20}
+dialog{border:none;border-radius:14px;padding:0;width:min(640px,calc(100vw - 24px));background:var(--surface);color:var(--fg)}
+dialog::backdrop{background:rgba(0,0,0,.45)}
+.dlg{padding:16px;display:grid;gap:12px;max-height:85vh;overflow:auto}
+.dlg .head{display:flex;justify-content:space-between;gap:8px;align-items:start}
+.hist{font-size:.8rem;color:var(--muted);border-top:1px solid var(--line);padding-top:8px;display:grid;gap:2px}
+.prev{display:grid;gap:16px}
+.plan{background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:14px;display:grid;gap:10px}
+.plan .ph{display:flex;flex-wrap:wrap;justify-content:space-between;gap:8px;align-items:center}
+.grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(64px,1fr));gap:6px}
+.cell{border-radius:8px;padding:6px 4px;text-align:center;font-weight:700;font-size:.85rem;cursor:pointer}
+.cell small{display:block;font-weight:500;font-size:.66rem;opacity:.85}
+.c-ok{background:var(--green-bg);color:var(--green)} .c-soon{background:var(--amber-bg);color:var(--amber)} .c-late{background:var(--red-bg);color:var(--red)}
+.legend{display:flex;gap:10px;flex-wrap:wrap;font-size:.78rem;color:var(--muted)}
+.legend i{display:inline-block;width:10px;height:10px;border-radius:3px;margin-right:4px;vertical-align:-1px}
+.who{display:flex;gap:8px;align-items:center;font-size:.85rem;color:var(--muted)}
+.who input{width:150px}
+.banner{background:var(--amber-bg);color:var(--amber);padding:10px 12px;border-radius:8px;font-weight:600;margin-bottom:12px}
+.pin{position:fixed;inset:0;background:var(--bg);display:flex;align-items:center;justify-content:center;padding:16px;z-index:30}
+body{padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
+@media (max-width:560px){.summary{grid-template-columns:repeat(2,1fr)}.stat.alert{grid-column:1/-1}.row{grid-template-columns:1fr}}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <h1>Manutenção<small>Ordens de serviço · Hotel Fazenda Vista Alegre</small></h1>
+    <div class="who"><span>Seu nome</span><input id="me" placeholder="Ex.: Ana"></div>
+  </header>
+  <div id="notif" class="banner" hidden></div>
+  <div id="banner" class="banner" hidden></div>
+  <nav class="tabs" role="tablist">
+    <button class="tab" role="tab" data-v="abertas" aria-selected="true">Em aberto<span class="n" id="nAb"></span></button>
+    <button class="tab" role="tab" data-v="nova" aria-selected="false">+ Nova OS</button>
+    <button class="tab" role="tab" data-v="prev" aria-selected="false">Preventiva<span class="n" id="nPv"></span></button>
+    <button class="tab" role="tab" data-v="hist" aria-selected="false">Histórico</button>
+  </nav>
+
+  <section id="v-abertas">
+    <div class="summary">
+      <div class="stat alert"><b id="sN">–</b><span>Sem atendimento (ninguém pegou ainda)</span></div>
+      <div class="stat"><b id="sU">–</b><span>Urgentes abertas</span></div>
+      <div class="stat"><b id="sA">–</b><span>Em aberto</span></div>
+      <div class="stat"><b id="sP">–</b><span>Aguardando peça</span></div>
+      <div class="stat"><b id="sC">–</b><span>Concluídas no mês</span></div>
+    </div>
+    <div class="list" id="listAb"><div class="empty">Carregando ordens de serviço…</div></div>
+  </section>
+
+  <section id="v-nova" hidden>
+    <form class="form" id="fNova">
+      <h2>Abrir ordem de serviço</h2>
+      <div class="row">
+        <label>Local<select id="nLocal" required></select></label>
+        <label>Tipo de serviço<select id="nCat" required></select></label>
+      </div>
+      <label id="nOutroW" hidden>Qual local?<input id="nOutro" placeholder="Ex.: Estacionamento"></label>
+      <label>O que está acontecendo?<textarea id="nDesc" required placeholder="Ex.: Ar-condicionado pingando água em cima da cama"></textarea></label>
+      <div><label style="margin-bottom:4px">Prioridade</label>
+        <div class="seg" id="nPri">
+          <button type="button" class="u" data-p="urgente" aria-pressed="false">Urgente · hóspede afetado</button>
+          <button type="button" class="n" data-p="normal" aria-pressed="true">Normal</button>
+          <button type="button" class="b" data-p="baixa" aria-pressed="false">Pode esperar</button>
+        </div></div>
+      <label>Foto (opcional)<input type="file" id="nFoto" accept="image/*" multiple></label>
+      <div class="photos" id="nFotoPrev"></div>
+      <button class="primary" type="submit" id="nSend">Abrir OS</button>
+    </form>
+  </section>
+
+  <section id="v-prev" hidden>
+    <div class="prev" id="prevList"><div class="empty">Carregando planos de preventiva…</div></div>
+    <div style="margin-top:12px"><button id="addPlan">+ Novo plano de preventiva</button></div>
+  </section>
+
+  <section id="v-hist" hidden>
+    <div class="seg" id="hTipo" style="margin-bottom:12px">
+      <button type="button" class="s" data-t="os" aria-pressed="true">Ordens de serviço</button>
+      <button type="button" class="s" data-t="prev" aria-pressed="false">Preventivas feitas</button>
+    </div>
+    <div class="filters">
+      <input id="fTxt" placeholder="Buscar local, número ou texto">
+      <select id="fSt"></select>
+      <select id="fCat"></select>
+    </div>
+    <div class="meta" id="histInfo" style="margin-bottom:8px"></div>
+    <div class="list" id="listHist"></div>
+  </section>
+</div>
+
+<dialog id="dlg"><div class="dlg" id="dlgBody"></div></dialog>
+<dialog id="dlgP"><div class="dlg" id="dlgPBody"></div></dialog>
+<div class="toast" id="toast" hidden></div>
+<div id="pinScreen" class="pin" hidden>
+  <form id="pinForm" class="form" style="max-width:340px;width:100%">
+    <h2>Manutenção · Vista Alegre</h2>
+    <label>Código de acesso da equipe<input id="pinIn" inputmode="numeric" autocomplete="off" required></label>
+    <div class="meta" id="pinErr"></div>
+    <button class="primary" type="submit">Entrar</button>
+  </form>
+</div>
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-messaging-compat.js"></script>
+
+<script>
+const R=(a,b,p='')=>Array.from({length:b-a+1},(_,i)=>p+(a+i));
+const QUARTOS=[...R(1,9,'CH'),'10','10A','11','11A','11B','12','12A','13','13A','13B','14','14A','15','15A','15B',...R(1,6,'L'),...R(17,32),...R(34,57),'C1','C2','C3','C4'];
+const AREAS=['Recepção','Restaurante','Cozinha','Piscina','Área de lazer','Lavanderia','Estacionamento','Jardim / áreas externas'];
+const CATS=['Elétrica','Hidráulica','Ar-condicionado','TV / Internet','Marcenaria / Móveis','Pintura / Alvenaria','Fechadura / Porta','Equipamento de cozinha','Piscina','Outro'];
+const ST={aberta:'Aberta',andamento:'Em andamento',peca:'Aguardando peça',concluida:'Concluída'};
+const PRI={urgente:'Urgente',normal:'Normal',baixa:'Pode esperar'};
+const $=s=>document.querySelector(s);
+let OS=[], PLANS=[], PREV=[];
+
+// chamada ao servidor (Apps Script)
+const API_URL='https://script.google.com/macros/s/AKfycbyNlkXHFWqxuAFvXI8bSo-H9mdukqh6zWRyrmvXww8zqC9qYTKP98CVLzjQSOcnY27WnQ/exec';
+let PIN='';try{PIN=localStorage.getItem('osPin')||''}catch(e){}
+async function api(fn,...args){
+  const r=await fetch(API_URL,{method:'POST',headers:{'Content-Type':'text/plain;charset=utf-8'},body:JSON.stringify({pin:PIN,fn,args})});
+  const j=await r.json();
+  if(!j.ok){if(j.erro==='pin')askPin('Código incorreto.');throw new Error(j.erro)}
+  return j.r;
+}
+function askPin(msg){$('#pinErr').textContent=msg||'';$('#pinScreen').hidden=false;$('#pinIn').focus()}
+async function load(){
+  try{const d=await api('getData');OS=d.os||[];PREV=d.prev||[];PLANS=(d.planos||[]).sort((a,b)=>String(a.nome).localeCompare(b.nome));$('#banner').hidden=true;render()}
+  catch(e){$('#banner').hidden=false;$('#banner').textContent='Não foi possível carregar os dados. Verifique a internet.'}
+}
+
+function esc(s){return String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]))}
+function fmt(t){if(!t)return'';const d=new Date(t);return d.toLocaleDateString('pt-BR',{day:'2-digit',month:'2-digit'})+' '+d.toLocaleTimeString('pt-BR',{hour:'2-digit',minute:'2-digit'})}
+function fmtD(t){return t?new Date(t).toLocaleDateString('pt-BR'):'—'}
+function ago(t){const h=(Date.now()-t)/36e5;if(h<1)return Math.max(1,Math.round(h*60))+' min';if(h<48)return Math.round(h)+' h';return Math.round(h/24)+' dias'}
+function toast(m){const t=$('#toast');t.textContent=m;t.hidden=false;clearTimeout(toast.h);toast.h=setTimeout(()=>t.hidden=true,2600)}
+function me(){return $('#me').value.trim()}
+function needName(close){if(me())return false;if(close)close.close();$('#me').focus();toast('Preencha seu nome no alto da página');return true}
+try{$('#me').value=localStorage.getItem('osNome')||''}catch(e){}
+$('#me').addEventListener('change',()=>{try{localStorage.setItem('osNome',me())}catch(e){}});
+
+function opts(sel,arr,first){sel.innerHTML=(first?`<option value="">${first}</option>`:'')+arr.map(v=>`<option>${esc(v)}</option>`).join('')}
+$('#nLocal').innerHTML='<option value="">Escolha…</option><optgroup label="Acomodações">'+QUARTOS.map(q=>`<option>${q}</option>`).join('')+'</optgroup><optgroup label="Áreas">'+AREAS.map(q=>`<option>${q}</option>`).join('')+'<option value="__outro">Outro local…</option></optgroup>';
+opts($('#nCat'),CATS,'Escolha…'); opts($('#fCat'),CATS,'Todos os tipos');
+$('#fSt').innerHTML='<option value="">Todos os status</option>'+Object.entries(ST).map(([k,v])=>`<option value="${k}">${v}</option>`).join('');
+$('#nLocal').addEventListener('change',e=>{$('#nOutroW').hidden=e.target.value!=='__outro'});
+let pri='normal';
+$('#nPri').addEventListener('click',e=>{const b=e.target.closest('button');if(!b)return;pri=b.dataset.p;$('#nPri').querySelectorAll('button').forEach(x=>x.setAttribute('aria-pressed',x===b))});
+
+function show(v){document.querySelectorAll('.tab').forEach(t=>t.setAttribute('aria-selected',t.dataset.v===v));['abertas','nova','prev','hist'].forEach(k=>$('#v-'+k).hidden=k!==v)}
+document.querySelectorAll('.tab').forEach(t=>t.addEventListener('click',()=>show(t.dataset.v)));
+
+function card(o){return `<div class="card p-${o.prioridade}" data-id="${o.id}" tabindex="0">
+  <div class="top"><span class="num">#${o.numero}</span><span class="loc">${esc(o.local)}</span><span class="pill s-${o.status}">${ST[o.status]}</span>${o.prioridade==='urgente'?'<span class="pill s-aberta">Urgente</span>':''}${o.preventiva?'<span class="pill s-andamento">Preventiva</span>':''}</div>
+  <div class="desc">${esc(o.descricao)}</div>
+  <div class="meta">${esc(o.categoria)} · aberta por ${esc(o.abertoPor||'—')} há ${ago(o.abertoEm)}${o.responsavel?' · com '+esc(o.responsavel):''}${o.status==='concluida'?' · concluída '+fmtD(o.concluidoEm):''}</div></div>`}
+function bindCards(el){el.querySelectorAll('.card').forEach(c=>{c.onclick=()=>openOS(c.dataset.id);c.onkeydown=e=>{if(e.key==='Enter')openOS(c.dataset.id)}})}
+const prOrder={urgente:0,normal:1,baixa:2};
+
+function render(){
+  const ab=OS.filter(o=>o.status!=='concluida').sort((a,b)=>prOrder[a.prioridade]-prOrder[b.prioridade]||a.abertoEm-b.abertoEm);
+  const m0=new Date();m0.setDate(1);m0.setHours(0,0,0,0);
+  $('#sN').textContent=ab.filter(o=>o.status==='aberta').length;
+  $('#sU').textContent=ab.filter(o=>o.prioridade==='urgente').length;
+  $('#sA').textContent=ab.length;
+  $('#sP').textContent=ab.filter(o=>o.status==='peca').length;
+  $('#sC').textContent=OS.filter(o=>o.status==='concluida'&&o.concluidoEm>=m0.getTime()).length;
+  $('#nAb').textContent=ab.length||'';
+  $('#listAb').innerHTML=ab.length?ab.map(card).join(''):'<div class="empty">Nenhuma OS em aberto. Para registrar um problema, use <b>+ Nova OS</b>.</div>';
+  bindCards($('#listAb'));
+  renderHist(); renderPrev();
+}
+let hTipo='os';
+$('#hTipo').addEventListener('click',e=>{const b=e.target.closest('button');if(!b)return;hTipo=b.dataset.t;$('#hTipo').querySelectorAll('button').forEach(x=>x.setAttribute('aria-pressed',x===b));
+  $('#fSt').hidden=hTipo==='prev';$('#fCat').innerHTML=hTipo==='prev'?'<option value="">Todos os planos</option>'+PLANS.map(p=>`<option>${esc(p.nome)}</option>`).join(''):'<option value="">Todos os tipos</option>'+CATS.map(c=>`<option>${esc(c)}</option>`).join('');renderHist()});
+function renderHist(){
+  const q=$('#fTxt').value.toLowerCase(),s=$('#fSt').value,c=$('#fCat').value;
+  if(hTipo==='prev'){
+    const l=PREV.filter(r=>(!c||r.plano===c)&&(!q||`${r.local} ${r.plano} ${r.quem}`.toLowerCase().includes(q))).sort((a,b)=>b.t-a.t);
+    $('#histInfo').textContent=`${l.length} registro${l.length===1?'':'s'}`;
+    $('#listHist').innerHTML=l.length?l.map(r=>`<div class="card p-baixa" style="cursor:default"><div class="top"><span class="num">${fmtD(r.t)}</span><span class="loc">${esc(r.local)}</span><span class="pill s-concluida">Feito</span></div><div class="meta">${esc(r.plano)} · por ${esc(r.quem||'—')}</div></div>`).join(''):'<div class="empty">Nenhuma preventiva registrada ainda.</div>';
+    return;
+  }
+  const l=OS.filter(o=>(!s||o.status===s)&&(!c||o.categoria===c)&&(!q||(`#${o.numero} ${o.local} ${o.descricao} ${o.servico||''} ${o.responsavel||''}`).toLowerCase().includes(q))).sort((a,b)=>b.abertoEm-a.abertoEm);
+  const custo=l.reduce((t,o)=>t+(+o.custo||0),0);
+  $('#histInfo').textContent=`${l.length} OS${custo?' · custo total R$ '+custo.toLocaleString('pt-BR',{minimumFractionDigits:2}):''}`;
+  $('#listHist').innerHTML=l.length?l.map(card).join(''):'<div class="empty">Nenhuma OS encontrada.</div>';
+  bindCards($('#listHist'));
+}
+['fTxt','fSt','fCat'].forEach(id=>$('#'+id).addEventListener('input',renderHist));
+
+// fotos: reduz no celular antes de enviar para o Drive
+function shrink(file){return new Promise((ok,err)=>{const img=new Image();img.onload=()=>{const k=Math.min(1,1280/Math.max(img.width,img.height));const c=document.createElement('canvas');c.width=img.width*k;c.height=img.height*k;c.getContext('2d').drawImage(img,0,0,c.width,c.height);ok(c.toDataURL('image/jpeg',.8).split(',')[1])};img.onerror=err;img.src=URL.createObjectURL(file)})}
+async function upload(files){const ids=[];for(const f of files){try{ids.push(await api('uploadPhoto',await shrink(f),'image/jpeg',f.name))}catch(e){toast('Não foi possível enviar uma foto')}}return ids}
+$('#nFoto').addEventListener('change',e=>{$('#nFotoPrev').innerHTML=[...e.target.files].map(f=>`<img src="${URL.createObjectURL(f)}" alt="">`).join('')});
+const imgs=ids=>(ids||[]).map(id=>`<a href="https://drive.google.com/file/d/${id}/view" target="_blank"><img src="https://drive.google.com/thumbnail?id=${id}&sz=w400" alt="Foto da OS"></a>`).join('');
+
+$('#fNova').addEventListener('submit',async e=>{
+  e.preventDefault();if(needName())return;
+  let local=$('#nLocal').value;if(local==='__outro')local=$('#nOutro').value.trim();
+  if(!local)return toast('Escolha o local');
+  $('#nSend').disabled=true;$('#nSend').textContent='Enviando…';
+  try{
+    const fotos=await upload([...$('#nFoto').files]);
+    const o=await api('createOS',{local,categoria:$('#nCat').value,descricao:$('#nDesc').value.trim(),prioridade:pri,fotos,abertoPor:me()});
+    $('#fNova').reset();$('#nFotoPrev').innerHTML='';$('#nOutroW').hidden=true;
+    toast(`OS #${o.numero} aberta`);show('abertas');await load();
+  }catch(err){toast('Erro ao salvar. Tente de novo.')}
+  $('#nSend').disabled=false;$('#nSend').textContent='Abrir OS';
+});
+
+function openOS(id){
+  const o=OS.find(x=>x.id===id);if(!o)return;
+  $('#dlgBody').innerHTML=`<div class="head"><div><h2>OS #${o.numero} · ${esc(o.local)}</h2><div class="meta">${esc(o.categoria)} · ${PRI[o.prioridade]} · aberta em ${fmt(o.abertoEm)} por ${esc(o.abertoPor)}</div></div><button id="dX" aria-label="Fechar">✕</button></div>
+  <div class="desc">${esc(o.descricao)}</div>
+  <div class="photos">${imgs(o.fotos)}</div>
+  <div><label style="margin-bottom:4px">Status</label><div class="seg" id="dSt">${Object.entries(ST).map(([k,v])=>`<button type="button" class="s" data-s="${k}" aria-pressed="${o.status===k}">${v}</button>`).join('')}</div></div>
+  <div class="row"><label>Responsável<input id="dResp" value="${esc(o.responsavel||'')}" placeholder="Quem está resolvendo"></label>
+  <label>Custo (R$)<input id="dCusto" inputmode="decimal" value="${o.custo??''}" placeholder="0,00"></label></div>
+  <label>O que foi feito / peças usadas<textarea id="dServ">${esc(o.servico||'')}</textarea></label>
+  <label>Adicionar foto<input type="file" id="dFoto" accept="image/*" multiple></label>
+  <div><button class="primary" id="dSave">Salvar</button></div>
+  <div class="hist">${(o.historico||[]).slice().reverse().map(h=>`<div>${fmt(h.t)} · ${esc(h.quem)}: ${esc(h.txt)}</div>`).join('')}</div>`;
+  let st=o.status;
+  $('#dSt').onclick=e=>{const b=e.target.closest('button');if(!b)return;st=b.dataset.s;$('#dSt').querySelectorAll('button').forEach(x=>x.setAttribute('aria-pressed',x===b))};
+  $('#dX').onclick=()=>$('#dlg').close();
+  $('#dSave').onclick=async()=>{
+    if(needName($('#dlg')))return;
+    const btn=$('#dSave');btn.disabled=true;btn.textContent='Salvando…';
+    const now=Date.now(),h=[...(o.historico||[])];
+    const resp=$('#dResp').value.trim(),serv=$('#dServ').value.trim(),cs=String($('#dCusto').value).trim(),custo=cs?parseFloat(cs.replace(/\./g,'').replace(',','.')):NaN;
+    if(st!==o.status)h.push({t:now,quem:me(),txt:'Status: '+ST[st]});
+    if(resp!==(o.responsavel||''))h.push({t:now,quem:me(),txt:'Responsável: '+(resp||'—')});
+    if(serv!==(o.servico||''))h.push({t:now,quem:me(),txt:'Atualizou o serviço feito'});
+    const novas=await upload([...$('#dFoto').files]);if(novas.length)h.push({t:now,quem:me(),txt:'Adicionou foto'});
+    const upd={status:st,responsavel:resp,servico:serv,custo:isNaN(custo)?null:custo,fotos:[...(o.fotos||[]),...novas],historico:h,concluidoEm:st==='concluida'?(o.concluidoEm||now):null};
+    try{await api('updateOS',o.id,upd);toast(`OS #${o.numero} salva`);$('#dlg').close();await load()}catch(e){toast('Não foi possível salvar');btn.disabled=false;btn.textContent='Salvar'}
+  };
+  $('#dlg').showModal();
+}
+
+function stat(plan,loc){
+  const last=(plan.feitos||{})[loc];if(!last)return{c:'c-late',t:'nunca'};
+  const dl=(last+plan.frequenciaDias*864e5-Date.now())/864e5;
+  return{c:dl<0?'c-late':dl<=plan.frequenciaDias*0.2?'c-soon':'c-ok',t:dl<0?'vencido':Math.ceil(dl)+'d'};
+}
+function renderPrev(){
+  let venc=0;
+  if(!PLANS.length){$('#prevList').innerHTML='<div class="empty">Nenhum plano de preventiva ainda.</div>';$('#nPv').textContent='';return}
+  $('#prevList').innerHTML=PLANS.map(p=>{
+    const locs=p.locais||[];const ss=locs.map(l=>({l,...stat(p,l)}));const late=ss.filter(s=>s.c==='c-late').length,soon=ss.filter(s=>s.c==='c-soon').length;venc+=late;
+    return `<div class="plan"><div class="ph"><div><h2>${esc(p.nome)}</h2><div class="meta">A cada ${p.frequenciaDias} dias · ${locs.length} itens · <b style="color:var(--red)">${late} vencidos</b> · ${soon} vencem em breve (últimos ${Math.round(p.frequenciaDias*0.2)} dias)</div></div><button data-edit="${p.id}">Editar plano</button></div>
+    <div class="legend"><span><i class="c-ok"></i>Em dia</span><span><i class="c-soon"></i>Vence em breve</span><span><i class="c-late"></i>Vencido / nunca feito</span><span>Toque num item para registrar.</span></div>
+    ${locs.length?`<div class="grid">${ss.map(s=>`<div class="cell ${s.c}" data-p="${p.id}" data-l="${esc(s.l)}" tabindex="0">${esc(s.l)}<small>${s.t}</small></div>`).join('')}</div>`:'<div class="empty">Sem itens. Clique em <b>Editar plano</b> para adicionar os locais.</div>'}</div>`}).join('');
+  $('#nPv').textContent=venc||'';
+  $('#prevList').querySelectorAll('[data-edit]').forEach(b=>b.onclick=()=>editPlan(b.dataset.edit));
+  $('#prevList').querySelectorAll('.cell').forEach(c=>{c.onclick=()=>openItem(c.dataset.p,c.dataset.l);c.onkeydown=e=>{if(e.key==='Enter')openItem(c.dataset.p,c.dataset.l)}});
+}
+function openItem(pid,loc){
+  const p=PLANS.find(x=>x.id===pid);const last=(p.feitos||{})[loc];
+  const hoje=new Date().toISOString().slice(0,10);
+  $('#dlgPBody').innerHTML=`<div class="head"><div><h2>${esc(p.nome)} · ${esc(loc)}</h2><div class="meta">Última vez: ${fmtD(last)}${last?' por '+esc((p.feitosPor||{})[loc]||'—'):''} · próxima: ${last?fmtD(last+p.frequenciaDias*864e5):'agora'}</div></div><button id="pX" aria-label="Fechar">✕</button></div>
+  <label>Data em que foi feito<input type="date" id="pData" value="${hoje}" max="${hoje}"></label>
+  <div style="display:flex;gap:8px;flex-wrap:wrap"><button class="primary" id="pOk">Registrar como feito</button><button id="pOS">Abrir OS para este item</button></div>`;
+  $('#pX').onclick=()=>$('#dlgP').close();
+  $('#pOk').onclick=async()=>{
+    if(needName($('#dlgP')))return;
+    const t=new Date($('#pData').value+'T12:00').getTime();
+    try{$('#pOk').disabled=true;await api('markDone',p.id,loc,t,me());toast(`${loc} registrado`);$('#dlgP').close();await load()}catch(e){toast('Não foi possível salvar');$('#pOk').disabled=false}
+  };
+  $('#pOS').onclick=async()=>{
+    if(needName($('#dlgP')))return;
+    try{$('#pOS').disabled=true;const o=await api('createOS',{local:loc,categoria:p.categoria||'Outro',descricao:'Preventiva: '+p.nome,prioridade:'normal',preventiva:p.id,abertoPor:me()});
+    toast(`OS #${o.numero} aberta`);$('#dlgP').close();await load()}catch(e){toast('Não foi possível salvar');$('#pOS').disabled=false}
+  };
+  $('#dlgP').showModal();
+}
+function editPlan(pid){
+  const p=PLANS.find(x=>x.id===pid)||{nome:'',frequenciaDias:90,locais:[],categoria:'Outro'};
+  $('#dlgPBody').innerHTML=`<div class="head"><h2>${pid?'Editar plano':'Novo plano de preventiva'}</h2><button id="pX" aria-label="Fechar">✕</button></div>
+  <label>Nome<input id="eNome" value="${esc(p.nome)}" placeholder="Ex.: Limpeza dos filtros do ar-condicionado"></label>
+  <div class="row"><label>Repetir a cada (dias)<input id="eFreq" type="number" min="1" value="${p.frequenciaDias}"></label>
+  <label>Tipo de serviço<select id="eCat">${CATS.map(c=>`<option ${c===p.categoria?'selected':''}>${c}</option>`).join('')}</select></label></div>
+  <label>Itens / locais (um por linha)<textarea id="eLoc" style="min-height:160px">${esc((p.locais||[]).join('\n'))}</textarea></label>
+  <div><button type="button" id="eAll">Preencher com todas as acomodações</button></div>
+  <button class="primary" id="eSave">Salvar plano</button>`;
+  $('#pX').onclick=()=>$('#dlgP').close();
+  $('#eAll').onclick=()=>$('#eLoc').value=QUARTOS.join('\n');
+  $('#eSave').onclick=async()=>{
+    const d={nome:$('#eNome').value.trim(),frequenciaDias:Math.max(1,parseInt($('#eFreq').value)||90),categoria:$('#eCat').value,locais:[...new Set($('#eLoc').value.split('\n').map(s=>s.trim()).filter(Boolean))]};
+    if(!d.nome)return toast('Dê um nome ao plano');
+    try{$('#eSave').disabled=true;await api('savePlan',pid,d);toast('Plano salvo');$('#dlgP').close();await load()}catch(e){toast('Não foi possível salvar');$('#eSave').disabled=false}
+  };
+  $('#dlgP').showModal();
+}
+$('#addPlan').onclick=()=>editPlan(null);
+
+// ----- acesso, notificações e abertura pelo aviso -----
+$('#pinForm').addEventListener('submit',async e=>{
+  e.preventDefault();PIN=$('#pinIn').value.trim();
+  try{await api('getData');try{localStorage.setItem('osPin',PIN)}catch(_){}$('#pinScreen').hidden=true;load();setupNotif()}catch(_){}
+});
+function openFromHash(){const m=location.hash.match(/^#os-(.+)$/);if(m&&OS.some(o=>o.id===m[1])){history.replaceState(null,'',location.pathname);openOS(m[1])}}
+window.addEventListener('hashchange',()=>load().then(openFromHash));
+
+const FB={apiKey:"AIzaSyDI-ZjPUnVahpliKZe2PlUa191O65AmUbc",authDomain:"manutencao-vista-alegre.firebaseapp.com",projectId:"manutencao-vista-alegre",storageBucket:"manutencao-vista-alegre.firebasestorage.app",messagingSenderId:"591376954758",appId:"1:591376954758:web:fdae83d7e05246272b6807"};
+const VAPID='BDE0-B-LknOQcChruet8R9FZcIYrK-otbzA3hDwbfDWejT2lkwDnrSW87OAIyx2fteYjZ1KUM4yiCO2A94vOgYw';
+const isIOS=/iPhone|iPad|iPod/.test(navigator.userAgent);
+const standalone=matchMedia('(display-mode: standalone)').matches||navigator.standalone;
+let swReg=null;
+function notifMsg(html,btn){const n=$('#notif');n.hidden=false;n.innerHTML=html+(btn?` <button id="nBtn" class="primary" style="margin-left:8px">${btn}</button>`:'');if(btn)$('#nBtn').onclick=ativarNotif}
+async function setupNotif(){
+  if('serviceWorker' in navigator){try{swReg=await navigator.serviceWorker.register('firebase-messaging-sw.js')}catch(e){}}
+  if(isIOS&&!standalone){notifMsg('Para receber avisos de OS nova: toque em <b>Compartilhar → Adicionar à Tela de Início</b> e abra o app pelo ícone.');return}
+  if(!('Notification' in window)||!swReg){return}
+  if(Notification.permission==='granted'){ativarNotif(true);return}
+  if(Notification.permission==='denied'){notifMsg('As notificações estão bloqueadas. Libere nas configurações do celular para receber avisos de OS nova.');return}
+  notifMsg('Receba um aviso no celular a cada OS nova.','Ativar notificações');
+}
+async function ativarNotif(silencioso){
+  try{
+    if(Notification.permission!=='granted'){const p=await Notification.requestPermission();if(p!=='granted'){notifMsg('Notificações não permitidas. Para ativar depois, libere nas configurações do celular.');return}}
+    if(!firebase.apps.length)firebase.initializeApp(FB);
+    const msg=firebase.messaging();
+    const tok=await msg.getToken({vapidKey:VAPID,serviceWorkerRegistration:swReg});
+    let antigo='';try{antigo=localStorage.getItem('osTok')||''}catch(_){}
+    if(tok&&(tok!==antigo||!silencioso)){await api('registerToken',tok,me());try{localStorage.setItem('osTok',tok)}catch(_){}}
+    msg.onMessage(p=>{toast((p.notification&&p.notification.title)||'Nova OS');load()});
+    $('#notif').hidden=true;if(!silencioso)toast('Notificações ativadas');
+  }catch(e){notifMsg('Não foi possível ativar as notificações.','Tentar de novo')}
+}
+
+if(!PIN)askPin();else{load().then(openFromHash);setupNotif()}
+setInterval(()=>{if(PIN&&!document.hidden&&!$('#dlg').open&&!$('#dlgP').open)load()},30000);
+document.addEventListener('visibilitychange',()=>{if(!document.hidden&&PIN)load()});
+</script>
+</body>
+</html>

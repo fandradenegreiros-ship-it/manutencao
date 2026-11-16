@@ -1,0 +1,9 @@
+firebaseConfig (não secreto):
+apiKey: AIzaSyDI-ZjPUnVahpliKZe2PlUa191O65AmUbc
+authDomain: manutencao-vista-alegre.firebaseapp.com
+projectId: manutencao-vista-alegre
+storageBucket: manutencao-vista-alegre.firebasestorage.app
+messagingSenderId: 591376954758
+appId: 1:591376954758:web:fdae83d7e05246272b6807
+
+vapidKey: BDE0-B-LknOQcChruet8R9FZcIYrK-otbzA3hDwbfDWejT2lkwDnrSW87OAIyx2fteYjZ1KUM4yiCO2A94vOgYw
