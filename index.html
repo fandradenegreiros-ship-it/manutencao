@@ -195,7 +195,7 @@ async function api(fn,...args){
 }
 function askPin(msg){$('#pinErr').textContent=msg||'';$('#pinScreen').hidden=false;$('#pinIn').focus()}
 async function load(){
-  try{const d=await api('getData');OS=d.os||[];PREV=d.prev||[];PLANS=(d.planos||[]).sort((a,b)=>String(a.nome).localeCompare(b.nome));$('#banner').hidden=true;render()}
+  try{const d=await api('getData');OS=d.os||[];PREV=d.prev||[];PLANS=(d.planos||[]).sort((a,b)=>ordemPlano(a)-ordemPlano(b)||String(a.nome).localeCompare(b.nome));$('#banner').hidden=true;render()}
   catch(e){$('#banner').hidden=false;$('#banner').textContent='Não foi possível carregar os dados. Verifique a internet.'}
 }
 
@@ -248,7 +248,7 @@ function renderHist(){
   if(hTipo==='prev'){
     const l=PREV.filter(r=>(!c||r.plano===c)&&(!q||`${r.local} ${r.plano} ${r.quem}`.toLowerCase().includes(q))).sort((a,b)=>b.t-a.t);
     $('#histInfo').textContent=`${l.length} registro${l.length===1?'':'s'}`;
-    $('#listHist').innerHTML=l.length?l.map(r=>`<div class="card p-baixa" style="cursor:default"><div class="top"><span class="num">${fmtD(r.t)}</span><span class="loc">${esc(r.local)}</span><span class="pill s-concluida">Feito</span></div><div class="meta">${esc(r.plano)} · por ${esc(r.quem||'—')}</div></div>`).join(''):'<div class="empty">Nenhuma preventiva registrada ainda.</div>';
+    $('#listHist').innerHTML=l.length?l.map(r=>`<div class="card p-baixa" style="cursor:default"><div class="top"><span class="num">${fmtD(r.t)}</span><span class="loc">${esc(r.local)}</span><span class="pill s-concluida">Feito</span></div><div class="meta">${esc(r.plano)} · por ${esc(r.quem||'—')}</div>${r.obs?`<div class="desc">${r.pend?'⚠ ':''}${esc(r.obs)}</div>`:''}</div>`).join(''):'<div class="empty">Nenhuma preventiva registrada ainda.</div>';
     return;
   }
   const l=OS.filter(o=>(!s||o.status===s)&&(!c||o.categoria===c)&&(!q||(`#${o.numero} ${o.local} ${o.descricao} ${o.servico||''} ${o.responsavel||''}`).toLowerCase().includes(q))).sort((a,b)=>b.abertoEm-a.abertoEm);
@@ -309,38 +309,57 @@ function openOS(id){
   $('#dlg').showModal();
 }
 
+const ORDEM_PLANOS=['preventiva-aptos','aquecedor-lenha','ete','caixa-dagua','ar-condicionado','extintores'];
+const ordemPlano=p=>{const i=ORDEM_PLANOS.indexOf(p.id);return i<0?99:i};
+// contagem em dias de calendário: feito no dia X, a cada N dias → vence no dia X+N
+function dia0(t){const d=new Date(t);d.setHours(0,0,0,0);return d.getTime()}
+function proxima(plan,loc){const last=(plan.feitos||{})[loc];if(!last)return null;const d=new Date(dia0(last));d.setDate(d.getDate()+Number(plan.frequenciaDias));return d.getTime()}
+function hojeISO(){const d=new Date();return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0')}
 function stat(plan,loc){
-  const last=(plan.feitos||{})[loc];if(!last)return{c:'c-late',t:'nunca'};
-  const dl=(last+plan.frequenciaDias*864e5-Date.now())/864e5;
-  return{c:dl<0?'c-late':dl<=plan.frequenciaDias*0.2?'c-soon':'c-ok',t:dl<0?'vencido':Math.ceil(dl)+'d'};
+  const pend=(plan.pendencias||{})[loc];
+  const prox=proxima(plan,loc);if(!prox)return{c:'c-late',t:'nunca',pend};
+  const dl=Math.round((prox-dia0(Date.now()))/864e5);
+  if(dl<0)return{c:'c-late',t:'vencido',pend};
+  if(pend)return{c:'c-soon',t:'pendência',pend};
+  return{c:dl<=Math.round(plan.frequenciaDias*0.2)?'c-soon':'c-ok',t:dl===0?'hoje':dl+'d',pend};
 }
 function renderPrev(){
   let venc=0;
   if(!PLANS.length){$('#prevList').innerHTML='<div class="empty">Nenhum plano de preventiva ainda.</div>';$('#nPv').textContent='';return}
   $('#prevList').innerHTML=PLANS.map(p=>{
-    const locs=p.locais||[];const ss=locs.map(l=>({l,...stat(p,l)}));const late=ss.filter(s=>s.c==='c-late').length,soon=ss.filter(s=>s.c==='c-soon').length;venc+=late;
-    return `<div class="plan"><div class="ph"><div><h2>${esc(p.nome)}</h2><div class="meta">A cada ${p.frequenciaDias} dias · ${locs.length} itens · <b style="color:var(--red)">${late} vencidos</b> · ${soon} vencem em breve (últimos ${Math.round(p.frequenciaDias*0.2)} dias)</div></div><button data-edit="${p.id}">Editar plano</button></div>
-    <div class="legend"><span><i class="c-ok"></i>Em dia</span><span><i class="c-soon"></i>Vence em breve</span><span><i class="c-late"></i>Vencido / nunca feito</span><span>Toque num item para registrar.</span></div>
-    ${locs.length?`<div class="grid">${ss.map(s=>`<div class="cell ${s.c}" data-p="${p.id}" data-l="${esc(s.l)}" tabindex="0">${esc(s.l)}<small>${s.t}</small></div>`).join('')}</div>`:'<div class="empty">Sem itens. Clique em <b>Editar plano</b> para adicionar os locais.</div>'}</div>`}).join('');
+    const locs=p.locais||[];const ss=locs.map(l=>({l,...stat(p,l)}));const late=ss.filter(s=>s.c==='c-late').length,pend=ss.filter(s=>s.pend).length,soon=ss.filter(s=>s.c==='c-soon'&&!s.pend).length;venc+=late;
+    return `<div class="plan"><div class="ph"><div><h2>${esc(p.nome)}</h2><div class="meta">A cada ${p.frequenciaDias} dias · ${locs.length} itens · <b style="color:var(--red)">${late} vencidos</b>${pend?` · <b style="color:var(--amber)">${pend} com pendência</b>`:''} · ${soon} vencem em breve (últimos ${Math.round(p.frequenciaDias*0.2)} dias)</div></div><button data-edit="${p.id}">Editar plano</button></div>
+    <div class="legend"><span><i class="c-ok"></i>Em dia</span><span><i class="c-soon"></i>Vence em breve / com pendência ⚠</span><span><i class="c-late"></i>Vencido / nunca feito</span><span>Toque num item para registrar.</span></div>
+    ${locs.length?`<div class="grid">${ss.map(s=>`<div class="cell ${s.c}" data-p="${p.id}" data-l="${esc(s.l)}" tabindex="0" ${s.pend?`title="${esc(s.pend.txt)}"`:''}>${esc(s.l)}${s.pend?' ⚠':''}<small>${s.t}</small></div>`).join('')}</div>`:'<div class="empty">Sem itens. Clique em <b>Editar plano</b> para adicionar os locais.</div>'}</div>`}).join('');
   $('#nPv').textContent=venc||'';
   $('#prevList').querySelectorAll('[data-edit]').forEach(b=>b.onclick=()=>editPlan(b.dataset.edit));
   $('#prevList').querySelectorAll('.cell').forEach(c=>{c.onclick=()=>openItem(c.dataset.p,c.dataset.l);c.onkeydown=e=>{if(e.key==='Enter')openItem(c.dataset.p,c.dataset.l)}});
 }
 function openItem(pid,loc){
-  const p=PLANS.find(x=>x.id===pid);const last=(p.feitos||{})[loc];
-  const hoje=new Date().toISOString().slice(0,10);
-  $('#dlgPBody').innerHTML=`<div class="head"><div><h2>${esc(p.nome)} · ${esc(loc)}</h2><div class="meta">Última vez: ${fmtD(last)}${last?' por '+esc((p.feitosPor||{})[loc]||'—'):''} · próxima: ${last?fmtD(last+p.frequenciaDias*864e5):'agora'}</div></div><button id="pX" aria-label="Fechar">✕</button></div>
+  const p=PLANS.find(x=>x.id===pid);const last=(p.feitos||{})[loc];const pend=(p.pendencias||{})[loc];const prox=proxima(p,loc);
+  const hoje=hojeISO();
+  $('#dlgPBody').innerHTML=`<div class="head"><div><h2>${esc(p.nome)} · ${esc(loc)}</h2><div class="meta">Última vez: ${fmtD(last)}${last?' por '+esc((p.feitosPor||{})[loc]||'—'):''} · próxima: ${prox?fmtD(prox):'agora'}</div></div><button id="pX" aria-label="Fechar">✕</button></div>
+  ${pend?`<div class="banner" style="margin:0">⚠ Pendência: ${esc(pend.txt)}<div class="meta" style="color:inherit">${fmt(pend.t)} · ${esc(pend.quem||'—')}</div><button id="pRes" style="margin-top:8px">Marcar pendência como resolvida</button></div>`:''}
   <label>Data em que foi feito<input type="date" id="pData" value="${hoje}" max="${hoje}"></label>
+  <label>Observações (opcional)<textarea id="pObs" placeholder="Ex.: faltou trocar o filtro, aguardando peça"></textarea></label>
+  <label style="flex-direction:row;align-items:center;gap:8px;color:var(--fg)"><input type="checkbox" id="pPend" style="width:auto"> Ficou pendência (o item fica amarelo até resolver)</label>
   <div style="display:flex;gap:8px;flex-wrap:wrap"><button class="primary" id="pOk">Registrar como feito</button><button id="pOS">Abrir OS para este item</button></div>`;
   $('#pX').onclick=()=>$('#dlgP').close();
+  if(pend)$('#pRes').onclick=async()=>{
+    if(needName($('#dlgP')))return;
+    try{$('#pRes').disabled=true;await api('resolverPendencia',p.id,loc,me());toast('Pendência resolvida');$('#dlgP').close();await load()}catch(e){toast('Não foi possível salvar');$('#pRes').disabled=false}
+  };
   $('#pOk').onclick=async()=>{
     if(needName($('#dlgP')))return;
+    const obs=$('#pObs').value.trim(),temPend=$('#pPend').checked;
+    if(temPend&&!obs){$('#pObs').focus();return toast('Descreva a pendência nas observações')}
     const t=new Date($('#pData').value+'T12:00').getTime();
-    try{$('#pOk').disabled=true;await api('markDone',p.id,loc,t,me());toast(`${loc} registrado`);$('#dlgP').close();await load()}catch(e){toast('Não foi possível salvar');$('#pOk').disabled=false}
+    try{$('#pOk').disabled=true;await api('markDone',p.id,loc,t,me(),obs,temPend);toast(`${loc} registrado`);$('#dlgP').close();await load()}catch(e){toast('Não foi possível salvar');$('#pOk').disabled=false}
   };
   $('#pOS').onclick=async()=>{
     if(needName($('#dlgP')))return;
-    try{$('#pOS').disabled=true;const o=await api('createOS',{local:loc,categoria:p.categoria||'Outro',descricao:'Preventiva: '+p.nome,prioridade:'normal',preventiva:p.id,abertoPor:me()});
+    const obs=$('#pObs').value.trim();
+    try{$('#pOS').disabled=true;const o=await api('createOS',{local:loc,categoria:p.categoria||'Outro',descricao:'Preventiva: '+p.nome+(obs?' – '+obs:''),prioridade:'normal',preventiva:p.id,abertoPor:me()});
     toast(`OS #${o.numero} aberta`);$('#dlgP').close();await load()}catch(e){toast('Não foi possível salvar');$('#pOS').disabled=false}
   };
   $('#dlgP').showModal();
